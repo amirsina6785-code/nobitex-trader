@@ -1,0 +1,13 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'ir.nobitex.trader'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'ir.nobitex.trader'
+        minSdk 26
+        targetSdk 36
+        versionCode 300
+        versionName '3.0.0-secure'
+    }
+}
