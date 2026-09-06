@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.nobitex.trader.data.SecureStore
 import com.nobitex.trader.data.TradingRepository
-import com.nobitex.trader.data.api.ApiClient
+import com.nobitex.trader.data.ApiClient
 import com.nobitex.trader.data.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -17,9 +17,7 @@ sealed interface UiState<out T> {
     data class Error(val message: String) : UiState<Nothing>
 }
 
-class TradingViewModel(
-    app: Application
-) : AndroidViewModel(app) {
+class TradingViewModel(app: Application) : AndroidViewModel(app) {
 
     private val store = SecureStore(app)
 
@@ -58,10 +56,7 @@ class TradingViewModel(
             connection.value = UiState.Loading
 
             try {
-                ApiClient.create(
-                    url.trim(),
-                    key
-                )
+                ApiClient.create(url.trim(), key)
 
                 repo.connect(key)
                     .onSuccess {
@@ -81,7 +76,7 @@ class TradingViewModel(
                 ApiClient.clear()
                 connection.value =
                     UiState.Error(
-                        e.message ?: "اتصال برقرار نشد."
+                        e.message ?: "خطا در اتصال به سرور."
                     )
             }
         }
@@ -105,7 +100,7 @@ class TradingViewModel(
                 .onFailure {
                     status.value =
                         UiState.Error(
-                            it.message ?: "خطا در دریافت وضعیت ربات"
+                            it.message ?: "خطا در وضعیت ربات"
                         )
                 }
         }
@@ -220,25 +215,18 @@ class TradingViewModel(
 
     fun logout() {
         store.clear()
-
         connection.value = UiState.Idle
         status.value = UiState.Idle
         wallet.value = UiState.Idle
         trades.value = UiState.Idle
         logs.value = UiState.Idle
-        message.value = null
     }
 
-    fun savedUrl(): String {
-        return store.url()
-    }
+    fun savedUrl(): String = store.url()
 
-    fun savedKey(): String {
-        return store.token()
-    }
+    fun savedKey(): String = store.token()
 
-    fun hasSaved(): Boolean {
-        return savedUrl().isNotBlank() &&
-                savedKey().isNotBlank()
-    }
+    fun hasSaved(): Boolean =
+        savedUrl().isNotBlank() &&
+        savedKey().isNotBlank()
 }
