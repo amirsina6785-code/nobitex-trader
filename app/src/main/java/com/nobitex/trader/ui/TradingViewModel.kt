@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.nobitex.trader.data.SecureStore
 import com.nobitex.trader.data.TradingRepository
-import com.nobitex.trader.data.ApiClient
+import com.nobitex.trader.data.api.ApiClient
 import com.nobitex.trader.data.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -25,34 +25,22 @@ class TradingViewModel(app: Application) : AndroidViewModel(app) {
         ApiClient.current()
     }
 
-    val connection =
-        MutableStateFlow<UiState<ConnectionData>>(UiState.Idle)
-
-    val status =
-        MutableStateFlow<UiState<BotStatus>>(UiState.Idle)
-
-    val wallet =
-        MutableStateFlow<UiState<WalletBalance>>(UiState.Idle)
-
-    val trades =
-        MutableStateFlow<UiState<List<Trade>>>(UiState.Idle)
-
-    val logs =
-        MutableStateFlow<UiState<List<ActivityLog>>>(UiState.Idle)
-
-    val message =
-        MutableStateFlow<String?>(null)
+    val connection = MutableStateFlow<UiState<ConnectionData>>(UiState.Idle)
+    val status = MutableStateFlow<UiState<BotStatus>>(UiState.Idle)
+    val wallet = MutableStateFlow<UiState<WalletBalance>>(UiState.Idle)
+    val trades = MutableStateFlow<UiState<List<Trade>>>(UiState.Idle)
+    val logs = MutableStateFlow<UiState<List<ActivityLog>>>(UiState.Idle)
+    val message = MutableStateFlow<String?>(null)
 
     fun connect(url: String, key: String) {
-
         if (url.isBlank() || key.isBlank()) {
-            connection.value =
-                UiState.Error("آدرس سرور و کلید کنترل را وارد کنید.")
+            connection.value = UiState.Error(
+                "آدرس سرور و کلید کنترل را وارد کنید."
+            )
             return
         }
 
         viewModelScope.launch {
-
             connection.value = UiState.Loading
 
             try {
@@ -67,17 +55,13 @@ class TradingViewModel(app: Application) : AndroidViewModel(app) {
                     .onFailure {
                         ApiClient.clear()
                         connection.value =
-                            UiState.Error(
-                                it.message ?: "اتصال برقرار نشد."
-                            )
+                            UiState.Error(it.message ?: "اتصال برقرار نشد.")
                     }
 
             } catch (e: Exception) {
                 ApiClient.clear()
                 connection.value =
-                    UiState.Error(
-                        e.message ?: "خطا در اتصال به سرور."
-                    )
+                    UiState.Error(e.message ?: "خطا در اتصال به سرور.")
             }
         }
     }
@@ -99,9 +83,7 @@ class TradingViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 .onFailure {
                     status.value =
-                        UiState.Error(
-                            it.message ?: "خطا در وضعیت ربات"
-                        )
+                        UiState.Error(it.message ?: "خطا در وضعیت ربات")
                 }
         }
     }
@@ -117,22 +99,18 @@ class TradingViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 .onFailure {
                     wallet.value =
-                        UiState.Error(
-                            it.message ?: "خطا در کیف پول"
-                        )
+                        UiState.Error(it.message ?: "خطا در کیف پول")
                 }
         }
     }
 
     fun allocate(amount: Double) {
-
         if (amount <= 0) {
             message.value = "مبلغ باید بیشتر از صفر باشد."
             return
         }
 
         viewModelScope.launch {
-
             repo.allocateCapital(amount)
                 .onSuccess {
                     message.value = "سرمایه تخصیص داده شد."
@@ -168,7 +146,6 @@ class TradingViewModel(app: Application) : AndroidViewModel(app) {
         block: suspend () -> Result<Unit>
     ) {
         viewModelScope.launch {
-
             block()
                 .onSuccess {
                     message.value = successMessage
@@ -183,32 +160,26 @@ class TradingViewModel(app: Application) : AndroidViewModel(app) {
 
     fun loadTrades() {
         viewModelScope.launch {
-
             repo.getTrades()
                 .onSuccess {
                     trades.value = UiState.Success(it)
                 }
                 .onFailure {
                     trades.value =
-                        UiState.Error(
-                            it.message ?: "خطا در معاملات"
-                        )
+                        UiState.Error(it.message ?: "خطا در معاملات")
                 }
         }
     }
 
     fun loadLogs() {
         viewModelScope.launch {
-
             repo.getLogs()
                 .onSuccess {
                     logs.value = UiState.Success(it)
                 }
                 .onFailure {
                     logs.value =
-                        UiState.Error(
-                            it.message ?: "خطا در گزارش‌ها"
-                        )
+                        UiState.Error(it.message ?: "خطا در گزارش‌ها")
                 }
         }
     }
@@ -227,6 +198,5 @@ class TradingViewModel(app: Application) : AndroidViewModel(app) {
     fun savedKey(): String = store.token()
 
     fun hasSaved(): Boolean =
-        savedUrl().isNotBlank() &&
-        savedKey().isNotBlank()
+        savedUrl().isNotBlank() && savedKey().isNotBlank()
 }
