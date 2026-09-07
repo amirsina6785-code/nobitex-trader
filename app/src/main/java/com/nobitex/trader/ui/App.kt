@@ -12,10 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -34,10 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.nobitex.trader.data.model.ActivityLog
-import com.nobitex.trader.data.model.BotStatus
-import com.nobitex.trader.data.model.Trade
-import com.nobitex.trader.data.model.WalletBalance
 
 @Composable
 fun App(vm: TradingViewModel) {
@@ -50,10 +44,7 @@ fun App(vm: TradingViewModel) {
 
         LaunchedEffect(Unit) {
             if (vm.hasSaved()) {
-                vm.connect(
-                    vm.savedUrl(),
-                    vm.savedKey()
-                )
+                vm.connect(vm.savedToken())
             }
         }
 
@@ -82,11 +73,7 @@ private fun LoginScreen(
     onConnected: () -> Unit
 ) {
 
-    var url by remember {
-        mutableStateOf("")
-    }
-
-    var key by remember {
+    var token by remember {
         mutableStateOf("")
     }
 
@@ -113,28 +100,23 @@ private fun LoginScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "اتصال به سرور معامله‌گری",
+            text = "اتصال مستقیم به نوبیتکس",
             style = MaterialTheme.typography.bodyLarge
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
-            value = url,
-            onValueChange = { url = it },
+            value = token,
+            onValueChange = {
+                token = it
+            },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("آدرس سرور") },
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = key,
-            onValueChange = { key = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("کلید کنترل") },
-            visualTransformation = PasswordVisualTransformation(),
+            label = {
+                Text("توکن API نوبیتکس")
+            },
+            visualTransformation =
+                PasswordVisualTransformation(),
             singleLine = true
         )
 
@@ -142,11 +124,11 @@ private fun LoginScreen(
 
         Button(
             onClick = {
-                vm.connect(url, key)
+                vm.connect(token)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("اتصال")
+            Text("اتصال به نوبیتکس")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -175,10 +157,7 @@ private fun DashboardScreen(
     onLogout: () -> Unit
 ) {
 
-    val status by vm.status.collectAsState()
     val wallet by vm.wallet.collectAsState()
-    val trades by vm.trades.collectAsState()
-    val logs by vm.logs.collectAsState()
     val message by vm.message.collectAsState()
 
     Scaffold(
@@ -203,290 +182,79 @@ private fun DashboardScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement =
+                Arrangement.spacedBy(12.dp)
         ) {
 
             item {
-                StatusCard(status)
+
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+
+                        Text(
+                            text = "کیف پول نوبیتکس",
+                            style =
+                                MaterialTheme.typography.titleLarge
+                        )
+
+                        Spacer(
+                            modifier =
+                                Modifier.height(12.dp)
+                        )
+
+                        when (val state = wallet) {
+
+                            UiState.Loading -> {
+                                Text(
+                                    "در حال دریافت موجودی..."
+                                )
+                            }
+
+                            is UiState.Success -> {
+
+                                state.value.wallets
+                                    .forEach { (currency, data) ->
+
+                                        Text(
+                                            "$currency: ${data.balance}"
+                                        )
+                                    }
+                            }
+
+                            is UiState.Error -> {
+                                Text(state.message)
+                            }
+
+                            else -> {
+                                Text(
+                                    "اطلاعات کیف پول موجود نیست"
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             item {
-                WalletCard(wallet)
-            }
 
-            item {
-                ActionButtons(vm)
-            }
-
-            item {
-                Text(
-                    text = "آخرین معاملات",
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-
-            when (val state = trades) {
-
-                is UiState.Success -> {
-                    items(state.value) { trade ->
-                        TradeItem(trade)
-                    }
+                Button(
+                    onClick = vm::syncWallet,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("همگام‌سازی کیف پول")
                 }
-
-                UiState.Loading -> {
-                    item {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is UiState.Error -> {
-                    item {
-                        Text(state.message)
-                    }
-                }
-
-                else -> Unit
-            }
-
-            item {
-                Text(
-                    text = "گزارش فعالیت",
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-
-            when (val state = logs) {
-
-                is UiState.Success -> {
-                    items(state.value) { log ->
-                        LogItem(log)
-                    }
-                }
-
-                UiState.Loading -> {
-                    item {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is UiState.Error -> {
-                    item {
-                        Text(state.message)
-                    }
-                }
-
-                else -> Unit
             }
 
             if (message != null) {
+
                 item {
                     Text(message ?: "")
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatusCard(
-    state: UiState<BotStatus>
-) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-
-            Text(
-                text = "وضعیت ربات",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            when (state) {
-
-                UiState.Loading -> {
-                    Text("در حال دریافت...")
-                }
-
-                is UiState.Success -> {
-
-                    Text(
-                        text = if (state.value.isRunning) {
-                            "● در حال اجرا"
-                        } else {
-                            "● متوقف"
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text("سرمایه: ${state.value.capital}")
-                    Text("سود: ${state.value.profit}")
-                    Text("درصد سود: ${state.value.profitPercent}%")
-                    Text("تعداد معاملات: ${state.value.tradesCount}")
-                }
-
-                is UiState.Error -> {
-                    Text(state.message)
-                }
-
-                else -> {
-                    Text("وضعیت نامشخص")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun WalletCard(
-    state: UiState<WalletBalance>
-) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-
-            Text(
-                text = "کیف پول",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            when (state) {
-
-                UiState.Loading -> {
-                    Text("در حال همگام‌سازی...")
-                }
-
-                is UiState.Success -> {
-                    Text("USDT: ${state.value.usdt}")
-                    Text("BTC: ${state.value.btc}")
-                    Text("ETH: ${state.value.eth}")
-                    Text("USD: ${state.value.usd}")
-                }
-
-                is UiState.Error -> {
-                    Text(state.message)
-                }
-
-                else -> {
-                    Text("اطلاعات کیف پول موجود نیست")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ActionButtons(
-    vm: TradingViewModel
-) {
-
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-
-            Button(
-                onClick = vm::syncWallet,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("همگام‌سازی")
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = vm::start,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("شروع ربات")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-
-            OutlinedButton(
-                onClick = vm::stop,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("توقف ربات")
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = vm::emergency,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("توقف اضطراری")
-            }
-        }
-    }
-}
-
-@Composable
-private fun TradeItem(
-    trade: Trade
-) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-
-            Text("${trade.symbol} - ${trade.type}")
-            Text("قیمت: ${trade.price}")
-            Text("مقدار: ${trade.amount}")
-            Text("سود: ${trade.profit}")
-        }
-    }
-}
-
-@Composable
-private fun LogItem(
-    log: ActivityLog
-) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-
-            Text(log.message)
-
-            if (log.level.isNotBlank()) {
-                Text(
-                    text = log.level,
-                    style = MaterialTheme.typography.bodySmall
-                )
             }
         }
     }
