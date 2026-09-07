@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.nobitex.trader.ui
 
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -29,8 +32,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
 import com.nobitex.trader.data.model.ActivityLog
 import com.nobitex.trader.data.model.BotStatus
 import com.nobitex.trader.data.model.Trade
@@ -138,7 +141,9 @@ private fun LoginScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = { vm.connect(url, key) },
+            onClick = {
+                vm.connect(url, key)
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("اتصال")
@@ -147,12 +152,17 @@ private fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         when (val state = connection) {
-            UiState.Loading -> CircularProgressIndicator()
 
-            is UiState.Error -> Text(
-                text = state.message,
-                color = MaterialTheme.colorScheme.error
-            )
+            UiState.Loading -> {
+                CircularProgressIndicator()
+            }
+
+            is UiState.Error -> {
+                Text(
+                    text = state.message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
 
             else -> Unit
         }
@@ -174,9 +184,13 @@ private fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nobitex Trader") },
+                title = {
+                    Text("Nobitex Trader")
+                },
                 actions = {
-                    OutlinedButton(onClick = onLogout) {
+                    OutlinedButton(
+                        onClick = onLogout
+                    ) {
                         Text("خروج")
                     }
                 }
@@ -192,9 +206,17 @@ private fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            item { StatusCard(status) }
-            item { WalletCard(wallet) }
-            item { ActionButtons(vm) }
+            item {
+                StatusCard(status)
+            }
+
+            item {
+                WalletCard(wallet)
+            }
+
+            item {
+                ActionButtons(vm)
+            }
 
             item {
                 Text(
@@ -294,10 +316,11 @@ private fun StatusCard(
                 is UiState.Success -> {
 
                     Text(
-                        text = if (state.value.isRunning)
+                        text = if (state.value.isRunning) {
                             "● در حال اجرا"
-                        else
+                        } else {
                             "● متوقف"
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))
