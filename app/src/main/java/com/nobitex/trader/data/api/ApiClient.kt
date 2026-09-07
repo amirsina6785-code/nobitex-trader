@@ -9,29 +9,13 @@ object ApiClient {
 
     private var api: TradingBotApi? = null
 
-    fun create(
-        baseUrl: String,
-        key: String
-    ): TradingBotApi {
-
-        val url = if (baseUrl.endsWith("/")) {
-            baseUrl
-        } else {
-            "$baseUrl/"
-        }
-
-        require(
-            url.startsWith("https://") ||
-            url.startsWith("http://")
-        ) {
-            "Server URL must start with http:// or https://"
-        }
+    fun create(token: String): TradingBotApi {
 
         val client = OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val request = chain.request()
                     .newBuilder()
-                    .header("Authorization", "Bearer $key")
+                    .header("Authorization", "Token $token")
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .build()
@@ -44,7 +28,7 @@ object ApiClient {
             .build()
 
         api = Retrofit.Builder()
-            .baseUrl(url)
+            .baseUrl("https://api.nobitex.ir/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
