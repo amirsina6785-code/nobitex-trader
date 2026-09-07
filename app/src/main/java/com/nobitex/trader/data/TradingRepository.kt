@@ -9,35 +9,50 @@ class TradingRepository(
 
     private fun api(): TradingBotApi = apiProvider()
 
-    suspend fun getProfile(): Result<Unit> = try {
-        val response = api().getProfile()
+    suspend fun getProfile(): Result<Unit> {
+        return try {
+            val response = api().getProfile()
 
-        if (response.isSuccessful && response.body()?.status == "ok") {
-            Result.success(Unit)
-        } else {
-            Result.failure(
-                Exception(
-                    response.body()?.status ?: "دریافت اطلاعات حساب ناموفق بود"
+            if (response.isSuccessful &&
+                response.body()?.status == "ok"
+            ) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    Exception(
+                        response.body()?.status
+                            ?: "دریافت اطلاعات حساب ناموفق بود"
+                    )
                 )
-            )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
-    } catch (e: Exception) {
-        Result.failure(e)
     }
 
-    suspend fun getWallets(): Result<NobitexWalletResponse> = try {
-        val response = api().getWallets()
+    suspend fun getWallets(): Result<NobitexWalletResponse> {
+        return try {
+            val response = api().getWallets()
 
-        if (response.isSuccessful && response.body()?.status == "ok") {
-            Result.success(
-                response.body() ?: NobitexWalletResponse()
-            )
-        } else {
-            Result.failure(
-                Exception("دریافت کیف پول ناموفق بود")
-            )
+            if (response.isSuccessful &&
+                response.body()?.status == "ok"
+            ) {
+                val data = response.body()
+
+                if (data != null) {
+                    Result.success(data)
+                } else {
+                    Result.failure(
+                        Exception("پاسخ کیف پول خالی است")
+                    )
+                }
+            } else {
+                Result.failure(
+                    Exception("دریافت کیف پول ناموفق بود")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
-    } catch (e: Exception) {
-        Result.failure(e)
     }
 }
