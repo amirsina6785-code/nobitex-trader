@@ -1,46 +1,37 @@
 package com.nobitex.trader.data.api
 
-import com.nobitex.trader.data.model.*
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+
+data class NobitexProfileResponse(
+    val status: String = "",
+    val profile: Profile? = null
+)
+
+data class Profile(
+    val username: String? = null,
+    val email: String? = null,
+    val firstName: String? = null,
+    val lastName: String? = null
+)
+
+data class NobitexWalletResponse(
+    val status: String = "",
+    val wallets: Map<String, WalletItem>? = null
+)
+
+data class WalletItem(
+    val balance: String? = null,
+    val blockedBalance: String? = null
+)
 
 interface TradingBotApi {
 
-    @POST("api/bot/connect")
-    suspend fun connect(
-        @Body request: ConnectRequest
-    ): Response<ServerResponse<ConnectionData>>
+    @GET("users/profile")
+    suspend fun getProfile(): Response<NobitexProfileResponse>
 
-    @GET("api/bot/status")
-    suspend fun getBotStatus(): Response<ServerResponse<BotStatus>>
-
-    @POST("api/wallet/sync")
-    suspend fun syncWallet(): Response<ServerResponse<WalletBalance>>
-
-    @POST("api/wallet/balance")
-    suspend fun getWalletBalance(): Response<ServerResponse<WalletBalance>>
-
-    @POST("api/bot/allocate")
-    suspend fun allocateCapital(
-        @Body request: AllocateRequest
-    ): Response<ServerResponse<Any>>
-
-    @POST("api/bot/start")
-    suspend fun startBot(): Response<ServerResponse<Any>>
-
-    @POST("api/bot/stop")
-    suspend fun stopBot(): Response<ServerResponse<Any>>
-
-    @POST("api/bot/emergency-stop")
-    suspend fun emergencyStop(): Response<ServerResponse<Any>>
-
-    @GET("api/bot/trades")
-    suspend fun getTrades(
-        @Query("limit") limit: Int = 50
-    ): Response<ServerResponse<List<Trade>>>
-
-    @GET("api/bot/logs")
-    suspend fun getLogs(
-        @Query("limit") limit: Int = 100
-    ): Response<ServerResponse<List<ActivityLog>>>
+    @GET("v2/wallets")
+    suspend fun getWallets(): Response<NobitexWalletResponse>
 }
