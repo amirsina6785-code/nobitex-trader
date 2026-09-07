@@ -34,24 +34,25 @@ data class ActivityLog(
     val timestamp: Long = 0L
 )
 
-data class ServerResponse<T>(
-    val success: Boolean = false,
-    val data: T? = null,
-    val error: String? = null,
-    val message: String? = null
+data class NobitexWallet(
+    val id: Int = 0,
+    val balance: String = "0",
+    val blocked: String = "0"
 )
 
-data class ConnectionData(
-    val connected: Boolean = false,
-    val serverVersion: String = "",
-    val timestamp: Long = 0L
+data class NobitexWalletResponse(
+    val status: String = "",
+    val wallets: Map<String, NobitexWallet> = emptyMap()
 )
 
-data class ConnectRequest(
-    val controlKey: String
+data class NobitexProfileResponse(
+    val status: String = "",
+    val profile: NobitexProfile? = null
 )
 
-data class AllocateRequest(
-    val amount: Double,
-    val symbol: String = "USDT"
+data class NobitexProfile(
+    val username: String? = null,
+    val email: String? = null,
+    val firstName: String? = null,
+    val lastName: String? = null
 )
